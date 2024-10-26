@@ -55,10 +55,22 @@ def loadMap(path):
 
  
 
+def vaoSetup(vertices):
+    print('how?')
+        # Unsure how to do this yet
 
-def processKeyInput():
+def processKeyInput(window, cameraPos, cameraFront, cameraUp):
     print('hi')
     #define functions for processing keyboard input
+    cameraSpeed = 0.1
+    if glfw.get_key(window, glfw.KEY_W)==glfw.PRESS:
+        cameraPos+=cameraSpeed*cameraFront
+    if glfw.get_key(window, glfw.KEY_S)==glfw.PRESS:
+        cameraPos-=cameraSpeed*cameraFront
+    if glfw.get_key(window,glfw.KEY_A)==glfw.PRESS:
+        cameraPos-= glm.normalize(glm.cross(cameraFront,cameraUp))*cameraSpeed # Normalize gets the unit vector, cross gets the perpendiculr to the up and front regions enabling us to go down and right 
+    if glfw.get_key(window,glfw.KEY_D)==glfw.PRESS:
+        cameraPos+=glm.normalize(glm.cross(cameraFront,cameraUp))*cameraSpeed
 
 
 
@@ -87,6 +99,13 @@ def main():
         glClearColor(0.2, 0.3, 0.3, 1.0)
         glDrawArrays(GL_POINTS,0,len(vertices)//3)
         # not working yet still have to implement vbos
+        view=glm.lookAt(cameraPosition,cameraPosition+cameraFront,   cameraUp) # lookat and perspective should move the camera but theres still nothing rendering
+        projection=glm.perspective(glm.radians(45.0),800/600,0.1,100) # will have to implement some shaders to actually use the view and projection. Perspective from a 45 degree angle for a 800*600 image.
+        print(view)
+        print(projection)
+        # HAVE TO FIX RENDERING cause its just showing nothing right now. VBOs will need to be added as well as an actual projection
+
+
 
 
     

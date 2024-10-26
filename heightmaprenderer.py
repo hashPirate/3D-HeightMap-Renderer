@@ -13,16 +13,45 @@
 # image objects can be used and we can convert the pixels to a numpy array for vertice calculation
 import sys
 import glfw
-import Image
 import numpy as np
 from PIL import Image
 import glm
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 from OpenGL.arrays import vbo
+VERTEX_SHADER = """
+#version 330 core
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec2 texCoords;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+out vec2 TexCoords;
+
+void main()
+{
+    gl_Position = projection * view * model * vec4(position, 1.0);
+    TexCoords = texCoords;
+}
+"""
+
+FRAGMENT_SHADER = """
+#version 330 core
+in vec2 TexCoords;
+out vec4 color;
+
+void main()
+{
+    color = vec4(TexCoords, 0.5, 1.0);  // Simple coloring based on texture coordinates
+}
+"""
+
 
 
 def initializeWindow():
+    if(glfw.init()==False): return None # forgot to add this in the first github commit
     glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR,3)
     glfw.window_hint(glfw.CONTEXT_VERSION_MINOR,3)
     glfw.window_hint(glfw.OPENGL_PROFILE,glfw.OPENGL_CORE_PROFILE)
@@ -56,8 +85,32 @@ def loadMap(path):
  
 
 def vaoSetup(vertices):
-    print('how?')
-        # Unsure how to do this yet
+     # This took a LONG time to implement and understand what arguments were needed
+     # These comments are all explanations of the functions copied from documentation/gpt so that I could understand what arguments were required
+     # the goal was to implement vbos and vaos in order to configure the scene
+    vao=glGenVertexArrays(1) 
+    vbo=glGenBuffers(1)      
+    glBindVertexArray(vao)  
+    glBindBuffer(GL_ARRAY_BUFFER, vbo) # Bind the VBO to the GL_ARRAY_BUFFER target (for vertex attributes)
+    glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL_STATIC_DRAW)  # this one line took forever
+    # - GL_ARRAY_BUFFER specifies this buffer will store vertex attributes.
+    # - vertices.nbytes is the size of the data in bytes.(I did not realize that this was required.)
+    # - vertices contains the actual vertex data.
+    # - GL_STATIC_DRAW hints that the data will not change frequently.
+    glEnableVertexAttribArray(0)  # Enable the position attribute at location 0
+    glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,5*vertices.itemsize,ctypes.c_void_p(3*vertices.itemsize))
+    # - ctypes.c_void_p(3 * vertices.itemsize) specifies the offset within each vertex where the texture data starts (after 3 floats for x, y, z).
+    glEnableVertexAttribArray(1)  
+    glBindBuffer(GL_ARRAY_BUFFER, 0)  
+    glBindVertexArray(0)              
+    return vao    
+
+def setupShaders(): # GRADIENT WISE SHADERS!
+    shader = compileProgram(
+        compileShader(VERTEX_SHADER, GL_VERTEX_SHADER),
+        compileShader(FRAGMENT_SHADER, GL_FRAGMENT_SHADER)
+    )
+    return shader
 
 def processKeyInput(window, cameraPos, cameraFront, cameraUp):
     print('hi')
@@ -88,12 +141,14 @@ def main():
     cameraPosition = glm.vec3(0.0, 1.0, 3.0)
     cameraFront = glm.vec3(0.0, 0.0, -1.0)
     cameraUp = glm.vec3(0.0, 1.0, 0.0)
+    shader = setupShaders() # WE ADDED SHADERS
+    vao = vaoSetup(vertices)
     glEnable(GL_DEPTH_TEST) # Close to LOD
     # Infinite main rendering loop down below ->>
 
     while(glfw.window_should_close(window)==False): 
         glfw.poll_events() # We can get keyboard input this way
-        processKeyInput() # not made yet
+        processKeyInput(window,cameraPosition,cameraFront,cameraUp)
         glViewport(0, 0, 800, 600) # size of the window
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT) # clear area and set colors as well for the 3dwindow
         glClearColor(0.2, 0.3, 0.3, 1.0)
@@ -101,16 +156,19 @@ def main():
         # not working yet still have to implement vbos
         view=glm.lookAt(cameraPosition,cameraPosition+cameraFront,   cameraUp) # lookat and perspective should move the camera but theres still nothing rendering
         projection=glm.perspective(glm.radians(45.0),800/600,0.1,100) # will have to implement some shaders to actually use the view and projection. Perspective from a 45 degree angle for a 800*600 image.
+        glGetUniformLocation(shader, "model")
+        viewLocation=glGetUniformLocation(shader,"view")
+        projectionLocation=glGetUniformLocation(shader,"projection")
+
+        glUniformMatrix4fv(viewLocation,1,GL_FALSE,glm.value_ptr(view))
+        glUniformMatrix4fv(projectionLocation,1,GL_FALSE,glm.value_ptr(projection)) # USING LOCATIONS FOR PROJECTION TO ACTUALLY RENDER
         print(view)
         print(projection)
-        # HAVE TO FIX RENDERING cause its just showing nothing right now. VBOs will need to be added as well as an actual projection
-
-
-
-
-    
+        glfw.swap_buffers(window)
+    glfw.terminate() #removing 
     
 
+    # needs work... isnt showing anything and i cant figure out why
 
 
 

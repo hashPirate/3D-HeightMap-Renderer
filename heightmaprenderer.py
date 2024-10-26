@@ -16,6 +16,10 @@ import glfw
 import Image
 import numpy as np
 from PIL import Image
+import glm
+from OpenGL.GL import *
+from OpenGL.GL.shaders import compileProgram, compileShader
+from OpenGL.arrays import vbo
 
 
 def initializeWindow():
@@ -40,6 +44,13 @@ def loadMap(path):
             texcoords.extend([x/width,y/height])
     print(texcoords)
     print(vertices)
+    vertices = np.array(vertices,dtype=np.float32)
+    texcoords = np.array(texcoords,dtype=np.float32)
+    combined = np.empty((width*height,5),dtype=np.float32) # setting up empty numpy array with 5 cols to combine the data into 1 array!!
+    combined[:,0:3] = vertices.reshape(-1,3) # adds the vertices to the first 3 columns of the matrice
+    combined[:,3:5] = texcoords.reshape(-1,2) # adds texture data to the next 2 cols of the matrix.
+    print(combined)
+    return combined,width,height
 
 
  
@@ -59,6 +70,23 @@ def main():
         print("Please enter the image as a command line argument!")
         exit()
     window=initializeWindow()
+    heightmapImage = sys.argv[1]
+    vertices, width, height = loadMap(heightmapImage)
+    cameraPosition  = glm.vec3(width/2,40,height+20) # glm can be used for 3d vectors in python and is very fast. We set the initial camera position to half the width and on top of the base of the image. This is a placeholder for later.
+    cameraPosition = glm.vec3(0.0, 1.0, 3.0)
+    cameraFront = glm.vec3(0.0, 0.0, -1.0)
+    cameraUp = glm.vec3(0.0, 1.0, 0.0)
+    glEnable(GL_DEPTH_TEST) # Close to LOD
+    # Infinite main rendering loop down below ->>
+
+    while(glfw.window_should_close(window)==False): 
+        glfw.poll_events() # We can get keyboard input this way
+        processKeyInput() # not made yet
+        glViewport(0, 0, 800, 600) # size of the window
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT) # clear area and set colors as well for the 3dwindow
+        glClearColor(0.2, 0.3, 0.3, 1.0)
+        glDrawArrays(GL_POINTS,0,len(vertices)//3)
+        # not working yet still have to implement vbos
 
 
     

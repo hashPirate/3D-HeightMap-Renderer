@@ -1,4 +1,4 @@
-# Rohan Shanbhag 3D heightmap renderer
+# 3D heightmap renderer
 # Just some comments up here outlining my initial thought process throwing out all ideas I had in the beginning.
 # Terrain renderer with a keyboard controllable camera(I think openGL is going to be the best for this and I have previous experience using it in Java)
 # Heightmap image is an NxN grayscale image so we're going to consider darker areas "valleys" and lighter areas "mountains". Calculating pixel intensity (similar to energy from seam carving) would be appropriate to determine heights for each point on map. 
@@ -47,12 +47,11 @@ void main()
     color = vec4(TexCoords, 0.5, 1.0);  // Simple coloring based on texture coordinates
 }
 """
+#forgot to mention i found these gradients on the internet for shaders
 
-#added error handling
-# Fixed rendering vbos
-# added rendering via frames (time difference)
-# reworked camera positioning logic
-# forgot to apply transformations to identity matrix and actually draw the renders (this is now fixed)
+
+
+
 
 
 def initializeWindow():
@@ -61,7 +60,7 @@ def initializeWindow():
         glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR,3)
         glfw.window_hint(glfw.CONTEXT_VERSION_MINOR,3)
         glfw.window_hint(glfw.OPENGL_PROFILE,glfw.OPENGL_CORE_PROFILE)
-        window = glfw.create_window(800,600,"Terrain Renderer",None,None)
+        window = glfw.create_window(800,600,"3D Terrain Renderer",None,None)
         glfw.make_context_current(window)
         return window
     except:
@@ -90,7 +89,11 @@ def loadMap(path):
     return combined,width,height
 
 
- 
+ #added error handling
+# Fixed rendering vbos
+# added rendering via frames (time difference)
+# reworked camera positioning logic
+# forgot to apply transformations to identity matrix and actually draw the renders (this is now fixed)
 
 def vaoSetup(vertices):
      # This took a LONG time to implement and understand what arguments were needed

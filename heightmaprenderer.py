@@ -48,16 +48,24 @@ void main()
 }
 """
 
+#added error handling
+# Fixed rendering vbos
+# added rendering via frames (time difference)
+# reworked camera positioning logic
+# forgot to apply transformations to identity matrix and actually draw the renders (this is now fixed)
 
 
 def initializeWindow():
-    if(glfw.init()==False): return None # forgot to add this in the first github commit
-    glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR,3)
-    glfw.window_hint(glfw.CONTEXT_VERSION_MINOR,3)
-    glfw.window_hint(glfw.OPENGL_PROFILE,glfw.OPENGL_CORE_PROFILE)
-    window = glfw.create_window(800,600,"Terrain Renderer",None,None)
-    glfw.make_context_current(window)
-    return window
+    try:
+        if(glfw.init()==False): return None # forgot to add this in the first github commit
+        glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR,3)
+        glfw.window_hint(glfw.CONTEXT_VERSION_MINOR,3)
+        glfw.window_hint(glfw.OPENGL_PROFILE,glfw.OPENGL_CORE_PROFILE)
+        window = glfw.create_window(800,600,"Terrain Renderer",None,None)
+        glfw.make_context_current(window)
+        return window
+    except:
+        raise Exception("ERROR WITH LOADING")
 
 def loadMap(path):
   # Simple function to load the map into a numpy array and hopefully add color
@@ -71,14 +79,14 @@ def loadMap(path):
             z=pixelData[y,x]
             vertices.extend([x,z,y])
             texcoords.extend([x/width,y/height])
-    print(texcoords)
-    print(vertices)
+  #  print(texcoords)
+   # print(vertices)
     vertices = np.array(vertices,dtype=np.float32)
     texcoords = np.array(texcoords,dtype=np.float32)
     combined = np.empty((width*height,5),dtype=np.float32) # setting up empty numpy array with 5 cols to combine the data into 1 array!!
     combined[:,0:3] = vertices.reshape(-1,3) # adds the vertices to the first 3 columns of the matrice
     combined[:,3:5] = texcoords.reshape(-1,2) # adds texture data to the next 2 cols of the matrix.
-    print(combined)
+   # print(combined)
     return combined,width,height
 
 
@@ -93,6 +101,7 @@ def vaoSetup(vertices):
     glBindVertexArray(vao)  
     glBindBuffer(GL_ARRAY_BUFFER, vbo) # Bind the VBO to the GL_ARRAY_BUFFER target (for vertex attributes)
     glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL_STATIC_DRAW)  # this one line took forever
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,5*vertices.itemsize,ctypes.c_void_p(0))                  # FIX for rendering erros
     # - GL_ARRAY_BUFFER specifies this buffer will store vertex attributes.
     # - vertices.nbytes is the size of the data in bytes.(I did not realize that this was required.)
     # - vertices contains the actual vertex data.
@@ -112,10 +121,10 @@ def setupShaders(): # GRADIENT WISE SHADERS!
     )
     return shader
 
-def processKeyInput(window, cameraPos, cameraFront, cameraUp):
+def processKeyInput(window, cameraPos, cameraFront, cameraUp, timeChange):
     print('hi')
     #define functions for processing keyboard input
-    cameraSpeed = 0.1
+    cameraSpeed = 5*timeChange 
     if glfw.get_key(window, glfw.KEY_W)==glfw.PRESS:
         cameraPos+=cameraSpeed*cameraFront
     if glfw.get_key(window, glfw.KEY_S)==glfw.PRESS:
@@ -138,32 +147,43 @@ def main():
     heightmapImage = sys.argv[1]
     vertices, width, height = loadMap(heightmapImage)
     cameraPosition  = glm.vec3(width/2,40,height+20) # glm can be used for 3d vectors in python and is very fast. We set the initial camera position to half the width and on top of the base of the image. This is a placeholder for later.
-    cameraPosition = glm.vec3(0.0, 1.0, 3.0)
-    cameraFront = glm.vec3(0.0, 0.0, -1.0)
-    cameraUp = glm.vec3(0.0, 1.0, 0.0)
+    cameraFront = glm.normalize(glm.vec3(width/2,0.0,height/2)-cameraPosition) # Found this on github but its a way to get a unit vector in 3d space of the distance from the bottom of the image map
+    cameraUp = glm.vec3(0.0,1.0,0.0) #pos up
     shader = setupShaders() # WE ADDED SHADERS
     vao = vaoSetup(vertices)
     glEnable(GL_DEPTH_TEST) # Close to LOD
+    previousFrame=0.0
     # Infinite main rendering loop down below ->>
 
     while(glfw.window_should_close(window)==False): 
+        currentFrame = glfw.get_time() # New frame logic including time differences
+        timeChange = currentFrame-previousFrame
+        previousFrame = currentFrame
         glfw.poll_events() # We can get keyboard input this way
-        processKeyInput(window,cameraPosition,cameraFront,cameraUp)
-        glViewport(0, 0, 800, 600) # size of the window
+        processKeyInput(window,cameraPosition,cameraFront,cameraUp,timeChange)
+        width2,height2=glfw.get_window_size(window)
+        glViewport(0, 0, width2,height2) # Changed this to include any window height in case of full screen mode
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT) # clear area and set colors as well for the 3dwindow
         glClearColor(0.2, 0.3, 0.3, 1.0)
-        glDrawArrays(GL_POINTS,0,len(vertices)//3)
+     #   glDrawArrays(GL_POINTS,0,len(vertices)//3) removed this line 
         # not working yet still have to implement vbos
-        view=glm.lookAt(cameraPosition,cameraPosition+cameraFront,   cameraUp) # lookat and perspective should move the camera but theres still nothing rendering
-        projection=glm.perspective(glm.radians(45.0),800/600,0.1,100) # will have to implement some shaders to actually use the view and projection. Perspective from a 45 degree angle for a 800*600 image.
-        glGetUniformLocation(shader, "model")
+        model = glm.mat4(1.0) # creating the identity matrix to apply transformations ( forgot this step before)
+        glUseProgram(shader)
+        view=glm.lookAt(cameraPosition,cameraPosition+cameraFront, cameraUp) # lookat and perspective should move the camera but theres still nothing rendering
+        projection=glm.perspective(glm.radians(45.0),width2/height2,0.1,1000) # will have to implement some shaders to actually use the view and projection. Perspective from a 45 degree fov for a height*width image. Increased render distance
+        
+        modelLocation=glGetUniformLocation(shader, "model")
         viewLocation=glGetUniformLocation(shader,"view")
         projectionLocation=glGetUniformLocation(shader,"projection")
+        glUniformMatrix4fv(modelLocation,1,GL_FALSE,glm.value_ptr(model))
 
         glUniformMatrix4fv(viewLocation,1,GL_FALSE,glm.value_ptr(view))
         glUniformMatrix4fv(projectionLocation,1,GL_FALSE,glm.value_ptr(projection)) # USING LOCATIONS FOR PROJECTION TO ACTUALLY RENDER
-        print(view)
-        print(projection)
+        #print(view)
+        #print(projection)
+        glBindVertexArray(vao) 
+        glDrawArrays(GL_POINTS,0,len(vertices)) # explains why it was broken i forgot to actually draw the arrays
+        glBindVertexArray(0)
         glfw.swap_buffers(window)
     glfw.terminate() #removing 
     

@@ -76,7 +76,7 @@ def loadMap(path):
     vertices,texcoords = [],[] #texture coordinates are just going to be the vertices divided by their position.
     for y in range(height):
         for x in range(width):
-            z=pixelData[y,x]
+            z=pixelData[y,x]*100 # increased pixel distances to add depth
             vertices.extend([x,z,y])
             texcoords.extend([x/width,y/height])
   #  print(texcoords)
@@ -121,18 +121,46 @@ def setupShaders(): # GRADIENT WISE SHADERS!
     )
     return shader
 
-def processKeyInput(window, cameraPos, cameraFront, cameraUp, timeChange):
-    print('hi')
-    #define functions for processing keyboard input
-    cameraSpeed = 5*timeChange 
-    if glfw.get_key(window, glfw.KEY_W)==glfw.PRESS:
-        cameraPos+=cameraSpeed*cameraFront
+def processKeyInput(window, cameraPos, cameraFront, cameraUp, timeChange,yaw,pitch,cameraSpeed):
+    #define functions for processing keyboard input 
+    rotationSpeed=90.0*timeChange # degrees per second 
+    if (glfw.get_key(window, glfw.KEY_O)==glfw.PRESS):
+        cameraSpeed=cameraSpeed-0.1
+        cameraSpeed=max(cameraSpeed,0.1) # set min speed 1
+    if (glfw.get_key(window, glfw.KEY_P)==glfw.PRESS):
+        cameraSpeed=cameraSpeed+0.1
+        cameraSpeed=min(cameraSpeed,2) # set max speed 100
+    
+    
+    
+    if (glfw.get_key(window, glfw.KEY_W)==glfw.PRESS):
+        pitch+=rotationSpeed
+        if (pitch>89.0): pitch=89.0
     if glfw.get_key(window, glfw.KEY_S)==glfw.PRESS:
+        pitch-=rotationSpeed
+        if(pitch<-89.0): pitch=-89.0
+    
+    if(glfw.get_key(window,glfw.KEY_A)==glfw.PRESS):
+        #cameraPos-= glm.normalize(glm.cross(cameraFront,cameraUp))*cameraSpeed # Normalize gets the unit vector, cross gets the perpendiculr to the up and front regions enabling us to go down and right 
+        yaw-=rotationSpeed
+    if(glfw.get_key(window,glfw.KEY_D)==glfw.PRESS):
+        #cameraPos+=glm.normalize(glm.cross(cameraFront,cameraUp))*cameraSpeed
+        yaw+=rotationSpeed
+    if (glfw.get_key(window,glfw.KEY_UP)==glfw.PRESS):
+        cameraPos+=cameraSpeed*cameraFront
+    if(glfw.get_key(window,glfw.KEY_DOWN)==glfw.PRESS):
         cameraPos-=cameraSpeed*cameraFront
-    if glfw.get_key(window,glfw.KEY_A)==glfw.PRESS:
-        cameraPos-= glm.normalize(glm.cross(cameraFront,cameraUp))*cameraSpeed # Normalize gets the unit vector, cross gets the perpendiculr to the up and front regions enabling us to go down and right 
-    if glfw.get_key(window,glfw.KEY_D)==glfw.PRESS:
-        cameraPos+=glm.normalize(glm.cross(cameraFront,cameraUp))*cameraSpeed
+    if glfw.get_key(window, glfw.KEY_SPACE) == glfw.PRESS:
+        cameraPos+=cameraUp*cameraSpeed
+    if glfw.get_key(window, glfw.KEY_LEFT_SHIFT) == glfw.PRESS:
+        cameraPos-=cameraUp*cameraSpeed
+    front = glm.vec3()
+    front.x = glm.cos(glm.radians(yaw))*glm.cos(glm.radians(pitch))  # friend suggested adding rotations 
+    front.y = glm.sin(glm.radians(pitch))
+    front.z = glm.sin(glm.radians(yaw))*glm.cos(glm.radians(pitch))
+    cameraFront = glm.normalize(front)
+    return cameraPos,cameraFront,yaw,pitch,cameraSpeed
+        
 
 
 
@@ -150,7 +178,10 @@ def main():
     cameraFront = glm.normalize(glm.vec3(width/2,0.0,height/2)-cameraPosition) # Found this on github but its a way to get a unit vector in 3d space of the distance from the bottom of the image map
     cameraUp = glm.vec3(0.0,1.0,0.0) #pos up
     shader = setupShaders() # WE ADDED SHADERS
+    cameraSpeed=0.5
     vao = vaoSetup(vertices)
+    yaw = -90 #face image 
+    pitch=0
     glEnable(GL_DEPTH_TEST) # Close to LOD
     previousFrame=0.0
     # Infinite main rendering loop down below ->>
@@ -160,7 +191,7 @@ def main():
         timeChange = currentFrame-previousFrame
         previousFrame = currentFrame
         glfw.poll_events() # We can get keyboard input this way
-        processKeyInput(window,cameraPosition,cameraFront,cameraUp,timeChange)
+        cameraPosition,cameraFront,yaw,pitch,cameraSpeed = processKeyInput(window,cameraPosition,cameraFront,cameraUp,timeChange,yaw,pitch,cameraSpeed)
         width2,height2=glfw.get_window_size(window)
         glViewport(0, 0, width2,height2) # Changed this to include any window height in case of full screen mode
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT) # clear area and set colors as well for the 3dwindow
@@ -188,7 +219,6 @@ def main():
     glfw.terminate() #removing 
     
 
-    # needs work... isnt showing anything and i cant figure out why
 
 
 

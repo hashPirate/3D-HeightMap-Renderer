@@ -54,7 +54,8 @@ void main()
 
 
 
-def initializeWindow():
+def initializeWindow(): 
+    '''Function that initializes glfw and throws an error if the renderer cannot start.'''
     try:
         if(glfw.init()==False): return None # forgot to add this in the first github commit
         glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR,3)
@@ -67,6 +68,7 @@ def initializeWindow():
         raise Exception("ERROR WITH LOADING")
 
 def loadMap(path):
+    '''Function that loads the image and its pixels into a numpy array returning a combined array of texture coordinates and vertices and a separate array of indices for mesh calculation'''
   # Simple function to load the map into a numpy array and hopefully add color
     img=Image.open(path).convert('L')  #Convert to grayscale using ~pillow~
     width,height=img.size
@@ -108,6 +110,7 @@ def loadMap(path):
 # forgot to apply transformations to identity matrix and actually draw the renders (this is now fixed)
 
 def vaoSetup(vertices,indices):
+    ''' Function to set up vao, vbo and ebos for efficient gpu usage.'''
      # This took a LONG time to implement and understand what arguments were needed
      # These comments are all explanations of the functions copied from documentation/gpt so that I could understand what arguments were required
      # the goal was to implement vbos and vaos in order to configure the scene
@@ -133,6 +136,7 @@ def vaoSetup(vertices,indices):
     return vao,len(indices)
 
 def setupShaders(): # GRADIENT WISE SHADERS!
+    '''Function that compiles predefined shaders and returns them.'''
     shader = compileProgram(
         compileShader(VERTEX_SHADER, GL_VERTEX_SHADER),
         compileShader(FRAGMENT_SHADER, GL_FRAGMENT_SHADER)
@@ -140,6 +144,7 @@ def setupShaders(): # GRADIENT WISE SHADERS!
     return shader
 
 def processKeyInput(window, cameraPos, cameraFront, cameraUp, timeChange,yaw,pitch,cameraSpeed,isMesh):
+    '''Function that defines all key inputs for the function and takes actions based on the inputted key. Also handles rotations for camera movement'''
     #define functions for processing keyboard input 
     rotationSpeed=90.0*timeChange # degrees per second 
     if (glfw.get_key(window, glfw.KEY_O)==glfw.PRESS):
@@ -233,7 +238,7 @@ def main():
         model = glm.mat4(1.0) # creating the identity matrix to apply transformations ( forgot this step before)
         glUseProgram(shader)
         view=glm.lookAt(cameraPosition,cameraPosition+cameraFront, cameraUp) # lookat and perspective should move the camera but theres still nothing rendering
-        projection=glm.perspective(glm.radians(45.0),width2/height2,0.1,1000) # will have to implement some shaders to actually use the view and projection. Perspective from a 45 degree fov for a height*width image. Increased render distance
+        projection=glm.perspective(glm.radians(45.0),width2/height2,0.1,1000) # will have to implement some shaders to actually use the view and projection. Perspective from a 45 degree fov for a height*width image. Increased render distance to 1000
         
         modelLocation=glGetUniformLocation(shader, "model")
         viewLocation=glGetUniformLocation(shader,"view")

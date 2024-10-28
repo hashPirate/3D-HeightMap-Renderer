@@ -78,6 +78,18 @@ def loadMap(path):
             z=pixelData[y,x]*100 # increased pixel distances to add depth
             vertices.extend([x,z,y])
             texcoords.extend([x/width,y/height])
+    indices = []
+    for height2 in range(height-1):
+        for width2 in range(width-1):
+            topLeft = height2*width+width2
+            topRight=topLeft + 1 # make triangle vertices
+            bottomLeft=(height2+1)*width+width2
+            bottomRight = bottomLeft + 1
+            indices.extend([topLeft, bottomLeft, topRight])
+            # Second triangle2
+            indices.extend([topRight, bottomLeft, bottomRight])
+    
+    indices = np.array(indices, dtype=np.uint32)
   #  print(texcoords)
    # print(vertices)
     vertices = np.array(vertices,dtype=np.float32)
@@ -86,7 +98,7 @@ def loadMap(path):
     combined[:,0:3] = vertices.reshape(-1,3) # adds the vertices to the first 3 columns of the matrice
     combined[:,3:5] = texcoords.reshape(-1,2) # adds texture data to the next 2 cols of the matrix.
    # print(combined)
-    return combined,width,height
+    return combined,indices,width,height
 
 
  #added error handling
@@ -95,15 +107,18 @@ def loadMap(path):
 # reworked camera positioning logic
 # forgot to apply transformations to identity matrix and actually draw the renders (this is now fixed)
 
-def vaoSetup(vertices):
+def vaoSetup(vertices,indices):
      # This took a LONG time to implement and understand what arguments were needed
      # These comments are all explanations of the functions copied from documentation/gpt so that I could understand what arguments were required
      # the goal was to implement vbos and vaos in order to configure the scene
     vao=glGenVertexArrays(1) 
     vbo=glGenBuffers(1)      
+    ebo=glGenBuffers(1)
     glBindVertexArray(vao)  
     glBindBuffer(GL_ARRAY_BUFFER, vbo) # Bind the VBO to the GL_ARRAY_BUFFER target (for vertex attributes)
     glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL_STATIC_DRAW)  # this one line took forever
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,indices.nbytes,indices,GL_STATIC_DRAW)
     glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,5*vertices.itemsize,ctypes.c_void_p(0))                  # FIX for rendering erros
     # - GL_ARRAY_BUFFER specifies this buffer will store vertex attributes.
     # - vertices.nbytes is the size of the data in bytes.(I did not realize that this was required.)
@@ -115,7 +130,7 @@ def vaoSetup(vertices):
     glEnableVertexAttribArray(1)  
     glBindBuffer(GL_ARRAY_BUFFER, 0)  
     glBindVertexArray(0)              
-    return vao    
+    return vao,len(indices)
 
 def setupShaders(): # GRADIENT WISE SHADERS!
     shader = compileProgram(
@@ -124,7 +139,7 @@ def setupShaders(): # GRADIENT WISE SHADERS!
     )
     return shader
 
-def processKeyInput(window, cameraPos, cameraFront, cameraUp, timeChange,yaw,pitch,cameraSpeed):
+def processKeyInput(window, cameraPos, cameraFront, cameraUp, timeChange,yaw,pitch,cameraSpeed,isMesh):
     #define functions for processing keyboard input 
     rotationSpeed=90.0*timeChange # degrees per second 
     if (glfw.get_key(window, glfw.KEY_O)==glfw.PRESS):
@@ -133,9 +148,9 @@ def processKeyInput(window, cameraPos, cameraFront, cameraUp, timeChange,yaw,pit
     if (glfw.get_key(window, glfw.KEY_P)==glfw.PRESS):
         cameraSpeed=cameraSpeed+0.1
         cameraSpeed=min(cameraSpeed,2) # set max speed 100
-    
-    
-    
+    if glfw.get_key(window, glfw.KEY_X) == glfw.PRESS:
+        isMesh = not(isMesh)
+        glfw.wait_events_timeout(0.2) # simple timeout so it doesnt continuous toggle
     if (glfw.get_key(window, glfw.KEY_W)==glfw.PRESS):
         pitch+=rotationSpeed
         if (pitch>89.0): pitch=89.0
@@ -162,7 +177,7 @@ def processKeyInput(window, cameraPos, cameraFront, cameraUp, timeChange,yaw,pit
     front.y = glm.sin(glm.radians(pitch))
     front.z = glm.sin(glm.radians(yaw))*glm.cos(glm.radians(pitch))
     cameraFront = glm.normalize(front)
-    return cameraPos,cameraFront,yaw,pitch,cameraSpeed
+    return cameraPos,cameraFront,yaw,pitch,cameraSpeed,isMesh
         
 
 
@@ -176,15 +191,16 @@ def main():
         exit()
     window=initializeWindow()
     heightmapImage = sys.argv[1]
-    vertices, width, height = loadMap(heightmapImage)
+    vertices,indices, width, height = loadMap(heightmapImage)
     cameraPosition  = glm.vec3(width/2,40,height+20) # glm can be used for 3d vectors in python and is very fast. We set the initial camera position to half the width and on top of the base of the image. This is a placeholder for later.
     cameraFront = glm.normalize(glm.vec3(width/2,0.0,height/2)-cameraPosition) # Found this on github but its a way to get a unit vector in 3d space of the distance from the bottom of the image map
     cameraUp = glm.vec3(0.0,1.0,0.0) #pos up
     shader = setupShaders() # WE ADDED SHADERS
     cameraSpeed=0.5
-    vao = vaoSetup(vertices)
+    vao,indicecount = vaoSetup(vertices,indices)
     yaw = -90 #face image 
     pitch=0
+    isMesh = True
     glEnable(GL_DEPTH_TEST) # Close to LOD
     previousFrame=0.0
     # Infinite main rendering loop down below ->>
@@ -194,7 +210,11 @@ def main():
         timeChange = currentFrame-previousFrame
         previousFrame = currentFrame
         glfw.poll_events() # We can get keyboard input this way
-        cameraPosition,cameraFront,yaw,pitch,cameraSpeed = processKeyInput(window,cameraPosition,cameraFront,cameraUp,timeChange,yaw,pitch,cameraSpeed)
+        cameraPosition,cameraFront,yaw,pitch,cameraSpeed,isMesh = processKeyInput(window,cameraPosition,cameraFront,cameraUp,timeChange,yaw,pitch,cameraSpeed,isMesh)
+        if isMesh:
+            glPolygonMode(GL_FRONT_AND_BACK,GL_LINE) #Redundant at the moment because arrays are being drawn as points and not polygons
+        else:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_POINT)  
         width2,height2=glfw.get_window_size(window)
         glViewport(0, 0, width2,height2) # Changed this to include any window height in case of full screen mode
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT) # clear area and set colors as well for the 3dwindow
@@ -216,7 +236,12 @@ def main():
         #print(view)
         #print(projection)
         glBindVertexArray(vao) 
-        glDrawArrays(GL_POINTS,0,len(vertices)) # explains why it was broken i forgot to actually draw the arrays
+       # glDrawArrays(GL_POINTS,0,len(vertices)) # explains why it was broken i forgot to actually draw the arrays
+       # Redraw arrays based on new indice calcs for mesh
+        if isMesh:
+            glDrawElements(GL_TRIANGLES,indicecount,GL_UNSIGNED_INT,None)
+        else:
+            glDrawElements(GL_POINTS,indicecount,GL_UNSIGNED_INT,None)
         glBindVertexArray(0)
         glfw.swap_buffers(window)
     glfw.terminate() #removing 

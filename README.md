@@ -11,7 +11,7 @@ The 3D Heightmap Renderer is a Python-based application that visualizes grayscal
 - Performance Optimizations: Utilizes Vertex Buffer Objects (VBOs) and Vertex Array Objects (VAOs) for efficient rendering leveraging GPU capabilities.
 
 # Installation
-- Install the required Python packages using pip: pip install glfw PyOpenGL numpy Pillow PyGLM
+- Install the required Python packages using pip: pip install -r requirements.txt
 - Clone the Repository
 - git clone https://github.com/hashPirate/3d-heightmap-renderer.git
 
@@ -19,7 +19,7 @@ The 3D Heightmap Renderer is a Python-based application that visualizes grayscal
 - cd 3d-heightmap-renderer
 - Run the renderer by providing the path to a grayscale heightmap image as a command-line argument:
 - python heightmaprenderer.py <imagepath>
-- 3 test images are provided for testing named testimage.png,test_crater_image.png(a depth map), and highrestest.jpg which is a higher resolution image.
+- 3 test images are provided for testing named testimage.png, test_crater_image.png(a depth map), and highrestest.jpg which is a higher resolution image.
 - Ensure that the heightmap image is a square (NxN) grayscale image for the best results! Darker pixels represent valleys, while lighter pixels represent mountains.
 
 # Controls

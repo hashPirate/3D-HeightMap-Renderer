@@ -23,21 +23,21 @@ The 3D Heightmap Renderer is a Python-based application that visualizes grayscal
 - Ensure that the heightmap image is a square (NxN) grayscale image. Darker pixels represent valleys, while lighter pixels represent mountains.
 
 # Controls
-Movement:
 
-W: Pitch camera upwards.
-S: Pitch camera downwards.
-A: Yaw camera to the left.
-D: Yaw camera to the right.
-Up Arrow: Move camera forward.
-Down Arrow: Move camera backward.
-Space: Move camera upwards.
-Left Shift: Move camera downwards.
+Movement:
+- W: Pitch camera upwards.
+- S: Pitch camera downwards.
+- A: Yaw camera to the left.
+- D: Yaw camera to the right.
+- Up Arrow: Move camera forward.
+- Down Arrow: Move camera backward.
+- Space: Move camera upwards.
+- Left Shift: Move camera downwards.
 Camera Speed:
-O: Decrease camera movement speed.
-P: Increase camera movement speed.
+- O: Decrease camera movement speed.
+- P: Increase camera movement speed.
 Rendering Mode:
-X: Toggle between wireframe and point rendering modes.
+- X: Toggle between wireframe and point rendering modes.
 
 # Example
 

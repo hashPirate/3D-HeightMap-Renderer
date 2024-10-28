@@ -13,7 +13,7 @@ The 3D Heightmap Renderer is a Python-based application that visualizes grayscal
 # Installation
 - Install the required Python packages using pip: pip install glfw PyOpenGL numpy Pillow PyGLM
 - Clone the Repository
-- git clone https://github.com/yourusername/3d-heightmap-renderer.git
+- git clone https://github.com/hashPirate/3d-heightmap-renderer.git
 - cd 3d-heightmap-renderer
 # Usage
 - Run the renderer by providing the path to a grayscale heightmap image as a command-line argument:

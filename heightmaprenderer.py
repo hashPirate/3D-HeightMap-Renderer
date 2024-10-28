@@ -19,6 +19,7 @@ import glm
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 from OpenGL.arrays import vbo
+
 VERTEX_SHADER = """
 #version 330 core
 layout(location = 0) in vec3 position;
@@ -48,10 +49,6 @@ void main()
 }
 """
 #forgot to mention i found these gradients on the internet for shaders
-
-
-
-
 
 
 def initializeWindow(): 
@@ -185,10 +182,6 @@ def processKeyInput(window, cameraPos, cameraFront, cameraUp, timeChange,yaw,pit
     return cameraPos,cameraFront,yaw,pitch,cameraSpeed,isMesh
         
 
-
-
-
-
 def main():
     print("Entered main")
     if(len(sys.argv)<2): 
@@ -259,9 +252,6 @@ def main():
         glBindVertexArray(0)
         glfw.swap_buffers(window)
     glfw.terminate() #removing 
-    
-
-
 
 
 if(__name__=='__main__'):

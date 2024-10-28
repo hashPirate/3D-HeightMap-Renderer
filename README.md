@@ -24,7 +24,7 @@ The 3D Heightmap Renderer is a Python-based application that visualizes grayscal
 
 # Controls
 
-Movement:
+
 - W: Pitch camera upwards.
 - S: Pitch camera downwards.
 - A: Yaw camera to the left.
@@ -33,12 +33,17 @@ Movement:
 - Down Arrow: Move camera backward.
 - Space: Move camera upwards.
 - Left Shift: Move camera downwards.
-Camera Speed:
 - O: Decrease camera movement speed.
 - P: Increase camera movement speed.
-Rendering Mode:
 - X: Toggle between wireframe and point rendering modes.
 
 # Example
 
-Sample visualization of a 3D terrain generated from a grayscale heightmap.
+- Sample visualization of a 3D terrain generated from a grayscale heightmap with the example input.
+![testimage](https://github.com/user-attachments/assets/e2c719f3-7dbd-4d14-bd2f-2008b3c2a410)
+
+- Below is the mesh generation of this input image.
+<img width="880" alt="Screenshot 2024-10-27 215215" src="https://github.com/user-attachments/assets/4f9bc86d-9349-4da2-819e-dd4f41850f2a">
+
+
+

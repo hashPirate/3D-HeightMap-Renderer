@@ -1,5 +1,5 @@
 # 3D-HeightMap-Renderer
-Given a grayscale heightmap image rendering it in 3D with a keyboard controllable camera
+Given a grayscale heightmap image rendering it in 3D with a keyboard controllable camera and toggleable wireframe.
 
 # Overview
 The 3D Heightmap Renderer is a Python-based application that visualizes grayscale heightmap images as interactive 3D terrains using OpenGL. Users can navigate the terrain with a keyboard-controllable camera, switch between rendering modes, and customize various aspects of the view to explore landscapes from all angles.
@@ -51,6 +51,24 @@ The 3D Heightmap Renderer is a Python-based application that visualizes grayscal
 
 - Mesh generation of the image above with depth
 <img width="928" alt="Screenshot 2024-10-27 222230" src="https://github.com/user-attachments/assets/4897c7d2-6077-44bc-8c18-e4cb98424e05">
+
+# Performance report with scale
+
+- On my laptop running an NVIDIA 3070 Laptop GPU and an AMD Ryzen 5950x the performance report for tested image resolutions is below
+<img width="476" alt="log" src="https://github.com/user-attachments/assets/23850508-08ed-4c33-bd05-424875ad5315">
+
+- All 4 images are the same with just the resolutions changed and an automated camera script and logging was used to simulate the same movement every time.
+- As observed the setup time increases by a factor of 4 every time which aligns with the actual change in pixels introduced between the tests.
+- The average FPS for the wireframe tests remained the same until the 1024x1024 image, where the render distance of 1000 was fully used and had an 8% imapact on the fps.
+- The average FPS for the dot tests consistently reduced by around 90 every time we increased the image size by a factor of 4.
+
+# GPU observations
+
+- The GPU memory consumption is manageable for the lower resolutions but once we cross 1024x1024 we have to store over a million vertices
+- Implementing frustum culling and LOD management should have a significant change on the FPS received.
+- Despite the increased image size, the rendering remains efficient because of the VBO's and EBO's.
+- As the heightmap size increases for larger images such as 2048x2048 memory consumption can approach the limits of lower end GPUs and cause slowdowns.
+
 
 
 

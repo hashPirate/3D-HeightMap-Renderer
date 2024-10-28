@@ -37,13 +37,23 @@ The 3D Heightmap Renderer is a Python-based application that visualizes grayscal
 - P: Increase camera movement speed.
 - X: Toggle between wireframe and point rendering modes.
 
-# Example
+# Example of mountains and valleys
 
 - Sample visualization of a 3D terrain generated from a grayscale heightmap with the example input.
 ![testimage](https://github.com/user-attachments/assets/e2c719f3-7dbd-4d14-bd2f-2008b3c2a410)
 
 - Below is the mesh generation of this input image.
 <img width="880" alt="Screenshot 2024-10-27 215215" src="https://github.com/user-attachments/assets/4f9bc86d-9349-4da2-819e-dd4f41850f2a">
+
+# Example of a crater
+- Another visualization of 3D generated terrain from a grayscale depthmap
+![test_crater_image](https://github.com/user-attachments/assets/b94d08cc-c483-4449-adf4-01828121d97f)
+
+- Mesh generation of the image above with depth
+<img width="928" alt="Screenshot 2024-10-27 222230" src="https://github.com/user-attachments/assets/4897c7d2-6077-44bc-8c18-e4cb98424e05">
+
+
+
 
 
 

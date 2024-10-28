@@ -115,7 +115,7 @@ def vaoSetup(vertices,indices):
     vbo=glGenBuffers(1)      
     ebo=glGenBuffers(1)
     glBindVertexArray(vao)  
-    glBindBuffer(GL_ARRAY_BUFFER, vbo) # Bind the VBO to the GL_ARRAY_BUFFER target (for vertex attributes)
+    glBindBuffer(GL_ARRAY_BUFFER, vbo) 
     glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL_STATIC_DRAW)  # this one line took forever
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,indices.nbytes,indices,GL_STATIC_DRAW)
@@ -203,6 +203,8 @@ def main():
     isMesh = True
     glEnable(GL_DEPTH_TEST) # Close to LOD
     previousFrame=0.0
+    frameCount = 0
+    lastTime = glfw.get_time() 
     # Infinite main rendering loop down below ->>
 
     while(glfw.window_should_close(window)==False): 
@@ -210,6 +212,13 @@ def main():
         timeChange = currentFrame-previousFrame
         previousFrame = currentFrame
         glfw.poll_events() # We can get keyboard input this way
+        frameCount+=1
+        if(currentFrame-lastTime>=1):
+            # Calculate Frames
+            fps = frameCount/(currentFrame-lastTime)
+            print(f"FPS: {fps:.2f}")
+            frameCount=0
+            lastTime=currentFrame
         cameraPosition,cameraFront,yaw,pitch,cameraSpeed,isMesh = processKeyInput(window,cameraPosition,cameraFront,cameraUp,timeChange,yaw,pitch,cameraSpeed,isMesh)
         if isMesh:
             glPolygonMode(GL_FRONT_AND_BACK,GL_LINE) #Redundant at the moment because arrays are being drawn as points and not polygons
